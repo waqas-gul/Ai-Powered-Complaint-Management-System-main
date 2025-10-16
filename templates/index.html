@@ -1,0 +1,369 @@
+{% extends "base.html" %}
+
+{% block title %}Classify Complaint - Complaint Management System{% endblock %}
+
+{% block content %}
+<div class="main-grid">
+    <!-- Left Column - Main Content -->
+    <div class="main-content">
+        <div class="card">
+            <div class="card-content">
+                <h3 class="card-title">
+                    <i class="fas fa-comment-dots"></i>
+                    Classify New Complaint
+                </h3>
+                
+                <form id="complaint-form" action="/predict" method="post">
+                    <div class="form-group">
+                        <label class="form-label" for="complaint">
+                            Complaint Details
+                        </label>
+                        <textarea 
+                            class="form-control" 
+                            id="complaint" 
+                            name="complaint" 
+                            placeholder="Describe your issue in detail. Our AI will automatically categorize it for faster resolution..."
+                            required
+                        ></textarea>
+                        <div class="char-counter">
+                            <span id="char-count">0</span> characters
+                        </div>
+                    </div>
+                    
+                    <button type="submit" class="btn btn-primary">
+                        <i class="fas fa-robot"></i>
+                        Analyze & Classify
+                    </button>
+                </form>
+
+                <div class="loader" id="loader">
+                    <div class="loader-spinner"></div>
+                    <p>AI is analyzing your complaint...</p>
+                </div>
+
+                <div class="result-container" id="result-container">
+                    <div class="result-header">
+                        <i class="fas fa-chart-network"></i>
+                        <h3 class="result-title">Classification Result</h3>
+                    </div>
+                    
+                    <div class="prediction-card">
+                        <div class="prediction-icon">
+                            <i class="fas fa-tag"></i>
+                        </div>
+                        <div class="prediction-text" id="prediction-text">
+                            <!-- Prediction will appear here -->
+                        </div>
+                    </div>
+
+                    <div class="form-group">
+                        <label class="form-label">
+                            <i class="fas fa-paper-plane"></i>
+                            Forward to Department
+                        </label>
+                        <p style="color: var(--gray); margin-bottom: 12px; font-size: 0.9rem;">
+                            Forward this complaint to the appropriate department for resolution.
+                        </p>
+                        
+                        <select class="form-control" id="department-select">
+                            <option value="">Select Department</option>
+                            <!-- Departments will be loaded here -->
+                        </select>
+                        
+                        <div style="margin-top: 16px; display: flex; align-items: center; gap: 12px;">
+                            <button class="btn btn-success" id="forward-btn">
+                                <i class="fas fa-paper-plane"></i>
+                                Forward Complaint
+                            </button>
+                            <div class="status-badge status-pending" id="status-badge">
+                                <i class="fas fa-clock"></i>
+                                Awaiting Action
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Right Column - Sidebar -->
+    <div class="sidebar">
+        <div class="card">
+            <div class="card-header">
+                <h3 class="card-title">
+                    <i class="fas fa-info-circle"></i>
+                    System Information
+                </h3>
+            </div>
+            <div class="card-content">
+                <div class="info-item" style="margin-bottom: 16px;">
+                    <div style="font-weight: 600; color: var(--dark); margin-bottom: 4px;">
+                        <i class="fas fa-brain"></i>
+                        AI Classification
+                    </div>
+                    <div style="color: var(--gray); font-size: 0.9rem;">
+                        Advanced ML model with 94% accuracy in complaint categorization.
+                    </div>
+                </div>
+                
+                <div class="info-item" style="margin-bottom: 16px;">
+                    <div style="font-weight: 600; color: var(--dark); margin-bottom: 4px;">
+                        <i class="fas fa-bolt"></i>
+                        Fast Processing
+                    </div>
+                    <div style="color: var(--gray); font-size: 0.9rem;">
+                        Real-time processing with average response under 2 seconds.
+                    </div>
+                </div>
+                
+                <div class="info-item" style="margin-bottom: 16px;">
+                    <div style="font-weight: 600; color: var(--dark); margin-bottom: 4px;">
+                        <i class="fas fa-envelope"></i>
+                        Automated Emails
+                    </div>
+                    <div style="color: var(--gray); font-size: 0.9rem;">
+                        Automatic email notifications to departments.
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="card" style="margin-top: 20px;">
+            <div class="card-header">
+                <h3 class="card-title">
+                    <i class="fas fa-tachometer-alt"></i>
+                    Quick Stats
+                </h3>
+            </div>
+            <div class="card-content">
+                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px;">
+                    <div class="stat-card" style="background: var(--white); padding: 12px; border-radius: var(--border-radius-sm); text-align: center; border-top: 3px solid var(--primary);">
+                        <div style="font-size: 1.5rem; font-weight: 700; color: var(--primary);" id="quick-total">0</div>
+                        <div style="font-size: 0.8rem; color: var(--gray);">Today</div>
+                    </div>
+                    <div class="stat-card" style="background: var(--white); padding: 12px; border-radius: var(--border-radius-sm); text-align: center; border-top: 3px solid var(--success);">
+                        <div style="font-size: 1.5rem; font-weight: 700; color: var(--success);" id="quick-resolved">0%</div>
+                        <div style="font-size: 0.8rem; color: var(--gray);">Resolved</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<style>
+    .main-grid {
+        display: grid;
+        grid-template-columns: 1fr 400px;
+        gap: 24px;
+    }
+
+    .result-container {
+        margin-top: 24px;
+        padding: 20px;
+        border-radius: var(--border-radius);
+        background: var(--light);
+        border-left: 4px solid var(--primary);
+        display: none;
+    }
+
+    .prediction-card {
+        background: var(--white);
+        padding: 16px;
+        border-radius: var(--border-radius-sm);
+        margin-bottom: 16px;
+        display: flex;
+        align-items: center;
+        gap: 12px;
+        border: 1px solid var(--light-gray);
+    }
+
+    .prediction-icon {
+        width: 40px;
+        height: 40px;
+        border-radius: 50%;
+        background: linear-gradient(135deg, var(--success) 0%, var(--accent) 100%);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        color: var(--white);
+        font-size: 1rem;
+    }
+
+    .prediction-text {
+        font-size: 1rem;
+        font-weight: 600;
+        color: var(--dark);
+    }
+
+    .char-counter {
+        text-align: right;
+        margin-top: 6px;
+        font-size: 0.8rem;
+        color: var(--gray);
+    }
+
+    @media (max-width: 1200px) {
+        .main-grid {
+            grid-template-columns: 1fr;
+        }
+    }
+</style>
+
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        const complaintTextarea = document.getElementById('complaint');
+        const charCount = document.getElementById('char-count');
+        const form = document.getElementById('complaint-form');
+        const loader = document.getElementById('loader');
+        const resultContainer = document.getElementById('result-container');
+        const predictionText = document.getElementById('prediction-text');
+        const departmentSelect = document.getElementById('department-select');
+        const forwardBtn = document.getElementById('forward-btn');
+        const statusBadge = document.getElementById('status-badge');
+        
+        let currentComplaintId = null;
+        
+        // Character counter
+        complaintTextarea.addEventListener('input', function() {
+            charCount.textContent = this.value.length;
+        });
+        
+        // Form submission
+        form.addEventListener('submit', function(e) {
+            e.preventDefault();
+            
+            console.log("Form submitted");
+            
+            // Show loader and hide any previous results
+            loader.style.display = 'block';
+            resultContainer.style.display = 'none';
+            
+            // Get the complaint text
+            const complaintTextValue = document.getElementById('complaint').value;
+            
+            // Create form data
+            const formData = new FormData();
+            formData.append('complaint', complaintTextValue);
+            
+            // Submit form using Fetch API
+            fetch('/predict', {
+                method: 'POST',
+                body: formData
+            })
+            .then(response => {
+                console.log("Response received, status:", response.status);
+                return response.json();
+            })
+            .then(data => {
+                console.log("Data received:", data);
+                loader.style.display = 'none';
+                
+                if (data.success) {
+                    predictionText.textContent = data.prediction_text;
+                    currentComplaintId = data.complaint_id;
+                    
+                    // Populate departments dropdown
+                    departmentSelect.innerHTML = '<option value="">Select Department</option>';
+                    if (data.departments && data.departments.length > 0) {
+                        data.departments.forEach(dept => {
+                            departmentSelect.innerHTML += `<option value="${dept.id}">${dept.name}</option>`;
+                        });
+                    }
+                    
+                    resultContainer.style.display = 'block';
+                    showNotification('Complaint successfully classified!', 'success');
+                } else {
+                    throw new Error(data.error || 'Unknown error occurred');
+                }
+            })
+            .catch(error => {
+                console.error('Error during prediction:', error);
+                loader.style.display = 'none';
+                predictionText.textContent = 'Error: Could not process complaint. Please try again.';
+                resultContainer.style.display = 'block';
+                showNotification('Error: ' + error.message, 'error');
+            });
+        });
+        
+        // Forward complaint
+        forwardBtn.addEventListener('click', function() {
+            if (!departmentSelect.value) {
+                showNotification('Please select a department', 'warning');
+                return;
+            }
+            
+            if (!currentComplaintId) {
+                showNotification('No complaint to forward', 'error');
+                return;
+            }
+            
+            forwardComplaint(currentComplaintId, departmentSelect.value);
+        });
+        
+        function forwardComplaint(complaintId, departmentId) {
+            fetch('/forward_complaint', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({
+                    complaint_id: complaintId,
+                    department_id: departmentId
+                })
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    statusBadge.className = 'status-badge status-forwarded';
+                    statusBadge.innerHTML = `<i class="fas fa-check"></i> Forwarded`;
+                    
+                    forwardBtn.disabled = true;
+                    forwardBtn.innerHTML = '<i class="fas fa-check"></i> Forwarded';
+                    
+                    showNotification('Complaint forwarded successfully!', 'success');
+                } else {
+                    showNotification('Error forwarding complaint: ' + data.error, 'error');
+                }
+            })
+            .catch(error => {
+                console.error('Error forwarding complaint:', error);
+                showNotification('Error forwarding complaint. Please try again.', 'error');
+            });
+        }
+        
+        // Show notification function
+        function showNotification(message, type = 'info') {
+            const notification = document.createElement('div');
+            notification.style.cssText = `
+                position: fixed;
+                top: 20px;
+                right: 20px;
+                padding: 12px 20px;
+                border-radius: 8px;
+                color: white;
+                font-weight: 500;
+                z-index: 1001;
+                box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+            `;
+            
+            const colors = {
+                success: '#10b981',
+                error: '#ef4444',
+                warning: '#f59e0b',
+                info: '#2563eb'
+            };
+            
+            notification.style.background = colors[type] || colors.info;
+            notification.textContent = message;
+            document.body.appendChild(notification);
+            
+            setTimeout(() => {
+                if (document.body.contains(notification)) {
+                    document.body.removeChild(notification);
+                }
+            }, 3000);
+        }
+    });
+</script>
+{% endblock %}

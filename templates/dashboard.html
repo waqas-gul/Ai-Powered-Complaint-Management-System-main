@@ -1,0 +1,266 @@
+{% extends "base.html" %}
+
+{% block title %}Dashboard - Complaint Management System{% endblock %}
+
+{% block content %}
+<div class="card">
+    <div class="card-content">
+        <h3 class="card-title">
+            <i class="fas fa-chart-bar"></i>
+            Analytics Dashboard
+        </h3>
+        
+        <!-- Summary Stats -->
+        <div class="stats-grid" style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 16px; margin-bottom: 32px;">
+            <div class="stat-card" style="background: var(--white); padding: 20px; border-radius: var(--border-radius); text-align: center; border-top: 4px solid var(--primary); box-shadow: var(--shadow);">
+                <div style="font-size: 2rem; font-weight: 700; color: var(--primary);" id="total-complaints">0</div>
+                <div style="font-size: 0.9rem; color: var(--gray); font-weight: 500;">Total Complaints</div>
+            </div>
+            <div class="stat-card" style="background: var(--white); padding: 20px; border-radius: var(--border-radius); text-align: center; border-top: 4px solid var(--success); box-shadow: var(--shadow);">
+                <div style="font-size: 2rem; font-weight: 700; color: var(--success);" id="completed-cases">0</div>
+                <div style="font-size: 0.9rem; color: var(--gray); font-weight: 500;">Completed Cases</div>
+            </div>
+            <div class="stat-card" style="background: var(--white); padding: 20px; border-radius: var(--border-radius); text-align: center; border-top: 4px solid var(--warning); box-shadow: var(--shadow);">
+                <div style="font-size: 2rem; font-weight: 700; color: var(--warning);" id="pending-cases">0</div>
+                <div style="font-size: 0.9rem; color: var(--gray); font-weight: 500;">Pending Cases</div>
+            </div>
+            <div class="stat-card" style="background: var(--white); padding: 20px; border-radius: var(--border-radius); text-align: center; border-top: 4px solid var(--accent); box-shadow: var(--shadow);">
+                <div style="font-size: 2rem; font-weight: 700; color: var(--accent);" id="avg-response">0h</div>
+                <div style="font-size: 0.9rem; color: var(--gray); font-weight: 500;">Avg Response Time</div>
+            </div>
+        </div>
+
+        <!-- Charts Grid -->
+        <div class="charts-grid" style="display: grid; grid-template-columns: repeat(auto-fit, minmax(400px, 1fr)); gap: 24px;">
+            <!-- Category Distribution -->
+            <div class="chart-container" style="background: var(--white); padding: 24px; border-radius: var(--border-radius); box-shadow: var(--shadow);">
+                <div class="chart-title" style="font-size: 1.1rem; font-weight: 600; margin-bottom: 16px; display: flex; align-items: center; gap: 8px;">
+                    <i class="fas fa-chart-pie"></i>
+                    Complaint Categories
+                </div>
+                <div class="chart-wrapper" style="position: relative; height: 300px;">
+                    <canvas id="categoryChart"></canvas>
+                </div>
+            </div>
+
+            <!-- Status Distribution -->
+            <div class="chart-container" style="background: var(--white); padding: 24px; border-radius: var(--border-radius); box-shadow: var(--shadow);">
+                <div class="chart-title" style="font-size: 1.1rem; font-weight: 600; margin-bottom: 16px; display: flex; align-items: center; gap: 8px;">
+                    <i class="fas fa-chart-bar"></i>
+                    Resolution Status
+                </div>
+                <div class="chart-wrapper" style="position: relative; height: 300px;">
+                    <canvas id="statusChart"></canvas>
+                </div>
+            </div>
+
+            <!-- Department Distribution -->
+            <div class="chart-container" style="background: var(--white); padding: 24px; border-radius: var(--border-radius); box-shadow: var(--shadow);">
+                <div class="chart-title" style="font-size: 1.1rem; font-weight: 600; margin-bottom: 16px; display: flex; align-items: center; gap: 8px;">
+                    <i class="fas fa-building"></i>
+                    Department Distribution
+                </div>
+                <div class="chart-wrapper" style="position: relative; height: 300px;">
+                    <canvas id="departmentChart"></canvas>
+                </div>
+            </div>
+
+            <!-- Monthly Trends -->
+            <div class="chart-container" style="background: var(--white); padding: 24px; border-radius: var(--border-radius); box-shadow: var(--shadow);">
+                <div class="chart-title" style="font-size: 1.1rem; font-weight: 600; margin-bottom: 16px; display: flex; align-items: center; gap: 8px;">
+                    <i class="fas fa-chart-line"></i>
+                    Monthly Trends
+                </div>
+                <div class="chart-wrapper" style="position: relative; height: 300px;">
+                    <canvas id="trendChart"></canvas>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+    let categoryChart, statusChart, departmentChart, trendChart;
+
+    document.addEventListener('DOMContentLoaded', function() {
+        loadDashboardData();
+    });
+
+    function loadDashboardData() {
+        fetch('/api/analytics')
+            .then(response => response.json())
+            .then(analytics => {
+                if (analytics.error) {
+                    console.error('Error loading analytics:', analytics.error);
+                    return;
+                }
+
+                // Update summary stats
+                document.getElementById('total-complaints').textContent = analytics.total_complaints;
+                document.getElementById('completed-cases').textContent = analytics.completion_rate.completed;
+                document.getElementById('pending-cases').textContent = analytics.completion_rate.pending;
+                document.getElementById('avg-response').textContent = analytics.avg_response_hours + 'h';
+
+                // Create charts
+                createCharts(analytics);
+            })
+            .catch(error => {
+                console.error('Error loading dashboard data:', error);
+            });
+    }
+
+    function createCharts(analytics) {
+        // Category Distribution Pie Chart
+        const categoryCtx = document.getElementById('categoryChart').getContext('2d');
+        if (categoryChart) categoryChart.destroy();
+        
+        categoryChart = new Chart(categoryCtx, {
+            type: 'pie',
+            data: {
+                labels: Object.keys(analytics.category_distribution),
+                datasets: [{
+                    data: Object.values(analytics.category_distribution),
+                    backgroundColor: [
+                        '#2563eb', '#0ea5e9', '#10b981', '#f59e0b', '#ef4444',
+                        '#8b5cf6', '#f97316', '#06b6d4', '#84cc16'
+                    ],
+                    borderWidth: 2,
+                    borderColor: '#fff'
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: {
+                    legend: {
+                        position: 'right',
+                        labels: {
+                            padding: 20,
+                            usePointStyle: true
+                        }
+                    }
+                }
+            }
+        });
+
+        // Status Distribution Bar Chart
+        const statusCtx = document.getElementById('statusChart').getContext('2d');
+        if (statusChart) statusChart.destroy();
+        
+        statusChart = new Chart(statusCtx, {
+            type: 'bar',
+            data: {
+                labels: Object.keys(analytics.resolution_status),
+                datasets: [{
+                    label: 'Complaints',
+                    data: Object.values(analytics.resolution_status),
+                    backgroundColor: [
+                        '#f59e0b', // Pending
+                        '#0ea5e9', // Assigned
+                        '#10b981'  // Completed
+                    ],
+                    borderWidth: 0,
+                    borderRadius: 4
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                scales: {
+                    y: {
+                        beginAtZero: true,
+                        ticks: {
+                            stepSize: 1
+                        }
+                    }
+                },
+                plugins: {
+                    legend: {
+                        display: false
+                    }
+                }
+            }
+        });
+
+        // Department Distribution Horizontal Bar Chart
+        const departmentCtx = document.getElementById('departmentChart').getContext('2d');
+        if (departmentChart) departmentChart.destroy();
+        
+        departmentChart = new Chart(departmentCtx, {
+            type: 'bar',
+            data: {
+                labels: Object.keys(analytics.department_stats),
+                datasets: [{
+                    label: 'Complaints',
+                    data: Object.values(analytics.department_stats),
+                    backgroundColor: '#2563eb',
+                    borderWidth: 0,
+                    borderRadius: 4
+                }]
+            },
+            options: {
+                indexAxis: 'y',
+                responsive: true,
+                maintainAspectRatio: false,
+                scales: {
+                    x: {
+                        beginAtZero: true,
+                        ticks: {
+                            stepSize: 1
+                        }
+                    }
+                },
+                plugins: {
+                    legend: {
+                        display: false
+                    }
+                }
+            }
+        });
+
+        // Monthly Trends Line Chart
+        const trendCtx = document.getElementById('trendChart').getContext('2d');
+        if (trendChart) trendChart.destroy();
+        
+        const monthlyLabels = Object.keys(analytics.monthly_trends);
+        const monthlyData = Object.values(analytics.monthly_trends);
+        
+        trendChart = new Chart(trendCtx, {
+            type: 'line',
+            data: {
+                labels: monthlyLabels,
+                datasets: [{
+                    label: 'Complaints per Month',
+                    data: monthlyData,
+                    borderColor: '#0ea5e9',
+                    backgroundColor: 'rgba(14, 165, 233, 0.1)',
+                    borderWidth: 3,
+                    tension: 0.4,
+                    fill: true,
+                    pointBackgroundColor: '#0ea5e9',
+                    pointBorderColor: '#fff',
+                    pointBorderWidth: 2,
+                    pointRadius: 5
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                scales: {
+                    y: {
+                        beginAtZero: true,
+                        ticks: {
+                            stepSize: 1
+                        }
+                    }
+                },
+                plugins: {
+                    legend: {
+                        display: false
+                    }
+                }
+            }
+        });
+    }
+</script>
+{% endblock %}
