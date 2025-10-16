@@ -60,6 +60,39 @@ It includes smart routing, automated email notifications, analytics dashboards, 
 
 ---
 
+
+
+
+## 🖼️ Screenshots
+
+Take a look at the **AI-Powered Complaint Management System** 👇  
+
+### 🧭 Dashboard  
+![Dashboard](screenshots/dashboard.png)
+
+---
+
+### 📝 Complaint Form  
+![Complaint Form](screenshots/complaint_form.png)
+
+---
+
+### 🤖 AI Classification  
+![AI Classification](screenshots/ai_classification.png)
+
+---
+
+### 🗂️ Case Management  
+![Case Management](screenshots/case_management.png)
+
+---
+
+### 📊 Analytics Dashboard  
+![Analytics](screenshots/analytics.png)
+
+> 💡 Each screenshot represents a key feature of the system — from complaint submission to AI-based routing and analytics.
+
+
 ## 🧠 Technology Stack
 
 | Layer                 | Technologies                      |
