@@ -72,23 +72,23 @@ Take a look at the **AI-Powered Complaint Management System** 👇
 
 ---
 
-### 📝 Complaint Form  
-![Complaint Form](screenshots/complaint_form.png)
+### 📝 Case Management
+![Complaint Form](screenshots/Case_Management.png)
 
 ---
 
-### 🤖 AI Classification  
-![AI Classification](screenshots/ai_classification.png)
+###  Classify Complaint
+![AI Classification](screenshots/Classify_Complaint.png)
 
 ---
 
-### 🗂️ Case Management  
-![Case Management](screenshots/case_management.png)
+###  Departments 
+![Case Management](screenshots/Departments.png)
 
 ---
 
-### 📊 Analytics Dashboard  
-![Analytics](screenshots/analytics.png)
+### Delete or Update Complaint 
+![Analytics](screenshots/delete.png)
 
 > 💡 Each screenshot represents a key feature of the system — from complaint submission to AI-based routing and analytics.
 
