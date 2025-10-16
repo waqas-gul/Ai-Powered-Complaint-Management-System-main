@@ -68,7 +68,7 @@ It includes smart routing, automated email notifications, analytics dashboards, 
 Take a look at the **AI-Powered Complaint Management System** 👇  
 
 ### 🧭 Dashboard  
-![Dashboard](screenshots/dashboard.png)
+![Dashboard](screenshots/Dashboard.png)
 
 ---
 
